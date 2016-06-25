@@ -7,7 +7,7 @@ var logger = require('morgan');
 var http = require('http');
 var server = http.createServer(app);
 var db = require('./modules/db');
-var mongoURL = "mongodb://127.0.0.1/perjection";
+var mongoURL = "mongodb://node:node@ds023644.mlab.com:23644/perjection";
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
