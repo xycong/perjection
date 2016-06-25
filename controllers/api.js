@@ -3,18 +3,25 @@ var router = express.Router();
 var Position = require('../models/Position');
 
 router.get('/', function (req, res) {
-    Position.getPositions(req.position, function (docs) {
-        res.send({ position: docs });
-    }, function (err) {
-        res.send(err);
-    });
+    var position = new Object();
+    console.log("Query");
+    position.lat = req.query.position.lat;
+    position.lng = req.query.position.lng;
+    console.log(position);
+    if (position != undefined) {
+        Position.getPositions(position, function (docs) {
+            res.send({ docs });
+        }, function (err) {
+            res.send(err);
+        });
+    }
 });
 
 router.post('/save', function (req, res) {
-    console.log(req);
-
+    console.log(req.body);
     Position.savePosition(req.body, function (docs) {
-    }, function(err) {
+        res.end();
+    }, function (err) {
         res.send(err);
     });
 });
