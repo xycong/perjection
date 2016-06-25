@@ -1,27 +1,22 @@
 var express = require('express');
 var router = express.Router();
-var Coord = require('../models/Coord');
+var Position = require('../models/Position');
 
 router.get('/', function (req, res) {
-    Recipe.findRecipes(req.body).then(function (docs) {
-        res.send({ recipes: docs });
+    Position.getPositions(req.position, function (docs) {
+        res.send({ position: docs });
     }, function (err) {
         res.send(err);
     });
 });
 
-router.get('/:id', function (req, res) {
-    Recipe.findRecipe(req.params.id).then(function (docs) {
-        res.send({ recipe: docs });
-    }, function (err) {
-        res.send(err);
-    });
-});
+router.post('/save', function (req, res) {
+    console.log(req);
 
-router.post('/:id/save', function (req, res) {
-    Recipe.saveRecipe(req.params.id).then(function (docs) {
-        res.send(docs);
+    Position.savePosition(req.body, function (docs) {
     }, function(err) {
         res.send(err);
     });
 });
+
+module.exports = router;
