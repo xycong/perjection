@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/daviddong/Projects/perjection/android/android-Camera2Basic/Application/build/intermediates/res/merged/debug/layout-land/fragment_camera2_basic.xml",
+        "source": "/Users/daviddong/Projects/perjection/android/android-Camera2Basic/Application/src/main/res/layout-land/fragment_camera2_basic.xml"
+    },
+    {
+        "merged": "/Users/daviddong/Projects/android-Camera2Basic/Application/build/intermediates/res/merged/debug/layout-land/fragment_camera2_basic.xml",
+        "source": "/Users/daviddong/Projects/android-Camera2Basic/Application/src/main/res/layout-land/fragment_camera2_basic.xml"
+    }
+]
