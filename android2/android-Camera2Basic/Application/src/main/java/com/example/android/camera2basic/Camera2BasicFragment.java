@@ -52,11 +52,14 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsoluteLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -68,11 +71,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class Camera2BasicFragment extends Fragment
         implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback {
+
+    private AbsoluteLayout mContentView;
+    private Timer mUpdateTimer;
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -382,7 +390,7 @@ public class Camera2BasicFragment extends Fragment
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
     private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-            int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
+                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
@@ -394,7 +402,7 @@ public class Camera2BasicFragment extends Fragment
             if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight &&
                     option.getHeight() == option.getWidth() * h / w) {
                 if (option.getWidth() >= textureViewWidth &&
-                    option.getHeight() >= textureViewHeight) {
+                        option.getHeight() >= textureViewHeight) {
                     bigEnough.add(option);
                 } else {
                     notBigEnough.add(option);
@@ -426,9 +434,21 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.picture).setOnClickListener(this);
-        view.findViewById(R.id.info).setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+        mContentView = (AbsoluteLayout) view.findViewById(R.id.contentView);
+        Display display = this.getActivity().getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+        Objects.getInstance().addObject(LocationSingleton.getInstance().getLocation(),
+                186.39, -77.81, 2.5, new Vector2(540, 960), new Vector2(width/2+100, height/2+200));
+        Objects.getInstance().addObject(LocationSingleton.getInstance().getLocation(),
+                202.2, -52.8, -28.5, new Vector2(540, 960), new Vector2(width/2+100, height/2+400));
+        Objects.getInstance().addObject(LocationSingleton.getInstance().getLocation(),
+                182.4, -77.2, 10.2, new Vector2(540, 960), new Vector2(width/2+100, height/2+300));
+        Objects.getInstance().addObject(LocationSingleton.getInstance().getLocation(),
+                178.8, -27.8, 9.4, new Vector2(540, 960), new Vector2(width/2+100, height/2+100));
     }
 
     @Override
@@ -440,6 +460,7 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
+        startUpdateTimer();
         startBackgroundThread();
 
         // When the screen is turned off and turned back on, the SurfaceTexture is already
@@ -457,6 +478,7 @@ public class Camera2BasicFragment extends Fragment
     public void onPause() {
         closeCamera();
         stopBackgroundThread();
+        stopUpdateTimer();
         super.onPause();
     }
 
@@ -773,7 +795,6 @@ public class Camera2BasicFragment extends Fragment
      * Lock the focus as the first step for a still image capture.
      */
     private void lockFocus() {
-        // comment
         try {
             // This is how to tell the camera to lock focus.
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
@@ -886,7 +907,6 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onClick(View view) {
-        takePicture();
     }
 
     private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
@@ -894,6 +914,52 @@ public class Camera2BasicFragment extends Fragment
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
+    }
+
+    private void putTextBoxes() {
+        mContentView.removeAllViews();
+
+        ArrayList<Vector2> objects = Objects.getInstance().getObjectLocations(LocationSingleton.getInstance().getLocation(),
+                SensorSingleton.getInstance().azimuth,
+                SensorSingleton.getInstance().pitch,
+                SensorSingleton.getInstance().roll);
+
+        for (int i=0; i<objects.size(); i++) {
+            Vector2 position = objects.get(i);
+            TextView t = new TextView(this.getActivity());
+            t.setText("This is a really long text");
+            t.setX((float) position.x);
+            t.setY((float) position.y);
+            mContentView.addView(t);
+        }
+//        TextView text1 = new TextView(this.getActivity());
+//        text1.setText("This is a test");
+//
+//        int x = (int)(Math.random() * 100) + 50;
+//        int y = (int)(Math.random() * 100) + 50;
+//        text1.setX(x);
+//        text1.setY(y);
+//        mContentView.addView(text1);
+    }
+
+    private void startUpdateTimer() {
+        mUpdateTimer = new Timer();
+        mUpdateTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Camera2BasicFragment.this.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Camera2BasicFragment.this.putTextBoxes();
+                    }
+                });
+            }
+        }, 0, 100);
+    }
+
+    private void stopUpdateTimer() {
+        mUpdateTimer.cancel();
+        mUpdateTimer = null;
     }
 
     /**

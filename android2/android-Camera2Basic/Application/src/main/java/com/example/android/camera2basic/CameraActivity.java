@@ -16,10 +16,17 @@
 
 package com.example.android.camera2basic;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 
 public class CameraActivity extends Activity {
+
+    static Context sContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +37,32 @@ public class CameraActivity extends Activity {
                     .replace(R.id.container, Camera2BasicFragment.newInstance())
                     .commit();
         }
+
+        CameraActivity.sContext = getApplicationContext();
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    200);
+        } else {
+            // start to request location
+            LocationSingleton.getInstance().start();
+        }
     }
 
+    public static Context getMainApplicationContext() {
+        return CameraActivity.sContext;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch(requestCode) {
+            case 200: {
+                if (grantResults.length > 0) {
+                    // start to request location
+                    LocationSingleton.getInstance().start();
+                }
+            }
+        }
+    }
 }
